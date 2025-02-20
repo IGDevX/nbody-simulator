@@ -1,12 +1,9 @@
-## A basic GitHub Actions workflow for your Quarkus application.
-
-name: CI build
+name: CI Build
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    branches:
+      - main # Run build on main updates
 
 jobs:
   build:
@@ -26,3 +23,4 @@ jobs:
 
       - name: Build
         run: ./gradlew build
+
