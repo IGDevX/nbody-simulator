@@ -60,11 +60,10 @@ jobs:
           sudo chmod 600 /etc/NetworkManager/system-connections/myvpn.nmconnection
           sudo sed -i 's/managed=false/managed=true/g' /etc/NetworkManager/NetworkManager.conf
           
-          nmcli device set eth0 managed yes
-          nmcli device set docker0 managed yes
           sudo systemctl restart NetworkManager
 
           echo "$(nmcli dev status)"
+          echo "$(nmcli general status)"
 
       - name: Setup SSH Key for Dokku
         run: |
