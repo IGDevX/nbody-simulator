@@ -20,10 +20,9 @@ jobs:
           echo "Configuring VPNC..."
           sudo bash -c 'cat > /etc/vpnc/default.conf <<EOF
           IPSec gateway ${{ secrets.VPN_GATEWAY }}
-          IPSec ID ${{ secrets.VPN_GROUP_ID }}
-          IPSec secret ${{ secrets.VPN_GROUP_SECRET }}
           Xauth username ${{ secrets.VPN_USERNAME }}
           Xauth password ${{ secrets.VPN_PASSWORD }}
+          Domain ${{ secrets.VPN_NT_DOMAIN }}
           EOF'
           sudo chmod 600 /etc/vpnc/default.conf
 
@@ -41,7 +40,7 @@ jobs:
       - name: Connect to VPN
         run: |
           echo "Connecting to VPN..."
-          sudo vpnc default --background
+          sudo vpnc
 
       - name: Deploy to Dokku (while connected to VPN)
         run: |
