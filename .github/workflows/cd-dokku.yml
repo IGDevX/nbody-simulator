@@ -56,6 +56,7 @@ jobs:
 
           [proxy]
           EOF'
+          sudo systemctl restart NetworkManager
 
       - name: Setup SSH Key for Dokku
         run: |
