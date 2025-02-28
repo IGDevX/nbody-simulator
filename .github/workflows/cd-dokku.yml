@@ -69,11 +69,10 @@ jobs:
 
           sudo systemctl restart NetworkManager
 
-          nmcli general status
+          nmcli device show eth0
           nmcli device status
           nmcli dev show eth0 | grep GENERAL.STATE
           sudo grep -r "unmanaged-devices" /etc/NetworkManager/
-          sudo ls -l /etc/network/
 
       - name: Setup SSH Key for Dokku
         run: |
