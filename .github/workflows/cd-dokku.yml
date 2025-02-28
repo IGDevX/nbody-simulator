@@ -59,12 +59,13 @@ jobs:
           sudo chown root:root /etc/NetworkManager/system-connections/myvpn.nmconnection
           sudo chmod 600 /etc/NetworkManager/system-connections/myvpn.nmconnection
           sudo sed -i 's/managed=false/managed=true/g' /etc/NetworkManager/NetworkManager.conf
-          nmcli device set eth0 managed yes
+
+          sudo nmcli con add type ethernet ifname eth0 con-name MyEthernet
+          sudo nmcli con up MyEthernet
 
           sudo systemctl restart NetworkManager
 
           echo "$(nmcli dev status)"
-          echo "$(sudo cat /etc/network/interfaces)"
 
 
       - name: Setup SSH Key for Dokku
