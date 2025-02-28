@@ -64,6 +64,7 @@ jobs:
           auto lo
           iface lo inet loopback
           EOF'
+          sudo touch /etc/NetworkManager/conf.d/10-globally-managed-devices.conf
 
           sudo systemctl restart NetworkManager
 
