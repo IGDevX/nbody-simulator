@@ -37,9 +37,6 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
-          ssh-keyscan -H "${{ secrets.DOKKU_ADDR }}" >> ~/.ssh/known_hosts
-          echo "Testing SSH connection..."
-          ssh -v dokku@${{ secrets.DOKKU_ADDR }} "echo SSH connection successful"
 
       - name: Connect to VPN
         run: |
@@ -48,6 +45,7 @@ jobs:
 
       - name: Deploy to Dokku (while connected to VPN)
         run: |
+          ssh-keyscan -H "${{ secrets.DOKKU_ADDR }}" >> ~/.ssh/known_hosts
           git remote add dokku dokku@${{ secrets.DOKKU_ADDR }}:nbody-simulator-backend
           git push dokku prod:master
 
