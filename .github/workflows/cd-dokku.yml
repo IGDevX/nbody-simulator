@@ -95,7 +95,7 @@ jobs:
           sudo systemctl restart NetworkManager
 
           echo "$(nmcli dev status)"
-          echo "$(sudo cat /etc/NetworkManager/NetworkManager.conf)"
+          echo "$(nmcli device show eth0 | grep GENERAL.STATE)"
 
       - name: Setup SSH Key for Dokku
         run: |
