@@ -58,7 +58,6 @@ jobs:
           EOF'
           sudo chown root:root /etc/NetworkManager/system-connections/myvpn.nmconnection
           sudo chmod 600 /etc/NetworkManager/system-connections/myvpn.nmconnection
-          sudo sed -i 's/managed=false/managed=true/g' /etc/NetworkManager/NetworkManager.conf
 
           sudo bash -c 'cat > /etc/network/interfaces <<EOF
           auto lo
@@ -84,7 +83,6 @@ jobs:
           sudo systemctl restart NetworkManager
 
           echo "$(nmcli dev status)"
-          echo "$(systemctl status systemd-networkd)"
 
       - name: Setup SSH Key for Dokku
         run: |
