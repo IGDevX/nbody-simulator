@@ -58,8 +58,8 @@ jobs:
           EOF'
           sudo chown root:root /etc/NetworkManager/system-connections/myvpn.nmconnection
           sudo chmod 600 /etc/NetworkManager/system-connections/myvpn.nmconnection
-          nmcli connection modify myvpn ipv4.gateway "0.0.0.0"
           sudo systemctl restart NetworkManager
+          nmcli connection modify myvpn ipv4.gateway "0.0.0.0"
 
       - name: Setup SSH Key for Dokku
         run: |
