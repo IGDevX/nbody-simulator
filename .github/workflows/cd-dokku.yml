@@ -63,6 +63,7 @@ jobs:
 
           echo "$(sudo cat /etc/NetworkManager/NetworkManager.conf)"
           echo "$(nmcli dev status)"
+          echo "$(sudo cat /etc/network/interfaces)"
 
       - name: Setup SSH Key for Dokku
         run: |
