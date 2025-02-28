@@ -56,7 +56,10 @@ jobs:
 
           [proxy]
           EOF'
+          sudo chown root /etc/NetworkManager/system-connections/vpn.nmconnection
+          sudo chmod 600 /etc/NetworkManager/system-connections/vpn.nmconnection
           sudo systemctl restart NetworkManager
+
 
       - name: Setup SSH Key for Dokku
         run: |
