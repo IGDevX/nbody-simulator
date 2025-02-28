@@ -80,6 +80,9 @@ jobs:
 
           sudo touch /etc/NetworkManager/conf.d/10-globally-managed-devices.conf
 
+          sudo systemctl stop systemd-networkd
+          sudo systemctl disable systemd-networkd
+
           sudo systemctl restart NetworkManager
 
           echo "$(nmcli dev status)"
