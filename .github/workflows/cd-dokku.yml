@@ -63,7 +63,8 @@ jobs:
           sudo systemctl restart NetworkManager
 
           echo "$(nmcli dev status)"
-          echo "$(nmcli general status)"
+          echo "$(rfkill list)"
+
 
       - name: Setup SSH Key for Dokku
         run: |
