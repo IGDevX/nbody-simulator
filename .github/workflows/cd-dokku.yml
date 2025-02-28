@@ -60,8 +60,10 @@ jobs:
           sudo chmod 600 /etc/NetworkManager/system-connections/myvpn.nmconnection
           sudo sed -i 's/managed=false/managed=true/g' /etc/NetworkManager/NetworkManager.conf
 
-          sudo nmcli con add type ethernet ifname eth0 con-name MyEthernet
-          sudo nmcli con up MyEthernet
+          sudo bash -c 'cat > /etc/network/interfaces <<EOF
+          auto lo
+          iface lo inet loopback
+          EOF'
 
           sudo systemctl restart NetworkManager
 
