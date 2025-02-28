@@ -1,4 +1,4 @@
-name: Connect to VPN
+name: Connect to VPN and Deploy
 
 on:
   push:
@@ -17,25 +17,38 @@ jobs:
 
       - name: Configure VPNC
         run: |
-          sudo bash -c 'cat > /etc/vpnc/vpnc.conf <<EOF
+          echo "Configuring VPNC..."
+          sudo bash -c 'cat > /etc/vpnc/default.conf <<EOF
           IPSec gateway ${{ secrets.VPN_GATEWAY }}
+          IPSec ID ${{ secrets.VPN_GROUP_ID }}
+          IPSec secret ${{ secrets.VPN_GROUP_SECRET }}
           Xauth username ${{ secrets.VPN_USERNAME }}
           Xauth password ${{ secrets.VPN_PASSWORD }}
-          Domain ${{ secrets.VPN_NT_DOMAIN }}
           EOF'
-          sudo bash -c 'cat > ~/.ssh/dokku <<EOF
-          ${{ secrets.DOKKU_SSH_KEY }}'
+          sudo chmod 600 /etc/vpnc/default.conf
+
+      - name: Setup SSH Key for Dokku
+        run: |
+          echo "Setting up SSH key..."
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DOKKU_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.DOKKU_ADDR }} >> ~/.ssh/known_hosts
 
       - name: Connect to VPN
         run: |
-          sudo vpnc
+          echo "Connecting to VPN..."
+          sudo vpnc default --background
 
-      - name: Run your job (while connected to VPN)
+      - name: Deploy to Dokku (while connected to VPN)
         run: |
           git remote add dokku ${{ secrets.DOKKU_ADDR }}:nbody-simulator-backend
           git push dokku prod:master
 
       - name: Disconnect VPN
+        if: always()
         run: |
-          sudo vpnc-disconnect
-
+          echo "Disconnecting VPN..."
+          sudo vpnc-disconnect || echo "VPN already disconnected."
