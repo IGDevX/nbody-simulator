@@ -10,77 +10,47 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install strongswan
+      - name: Configure nm
         run: |
-          sudo apt update && sudo apt install -y strongswan xl2tpd ppp lsof
+          echo "Configuring nm..."
+          sudo bash -c 'cat > /etc/NetworkManager/system-connections/vpn.nmconnection <<EOF
+          [connection]
+          id=vpn
+          uuid=eefb6558-af2c-452b-977a-451219161dbb
+          type=vpn
+          autoconnect=false
+          permissions=user:runner:;
 
-      - name: Configure strongswan
-        run: |
-          echo "Configuring strongswan..."
-          sudo bash -c 'cat > /etc/ipsec.conf <<EOF
-          config setup
-              charondebug="ike 2, knl 2, cfg 2"
+          [vpn]
+          domain=${{ secrets.VPN_NT_DOMAIN }}
+          gateway=${{ secrets.VPN_GATEWAY }}
+          ipsec-enabled=yes
+          ipsec-esp=${{ secrets.VPN_ESP }}
+          ipsec-ike=${{ secrets.VPN_IKE }}
+          machine-auth-type=psk
+          mru=1400
+          mtu=1400
+          password-flags=1
+          refuse-chap=yes
+          refuse-eap=yes
+          refuse-mschap=yes
+          refuse-pap=yes
+          user=${{ secrets.VPN_USERNAME }}
+          user-auth-type=${{ secrets.VPN_PASSWORD }}
+          service-type=org.freedesktop.NetworkManager.l2tp
 
-          conn L2TP-PSK
-              keyexchange=ikev1
-              left=%defaultroute
-              leftauth=psk
-              right=${{ secrets.VPN_GATEWAY }}
-              rightauth=psk
-              rightsubnet=0.0.0.0/0
-              ike=${{ secrets.VPN_IKE }}
-              esp=${{ secrets.VPN_ESP }}
-              keyingtries=3
-              ikelifetime=8h
-              lifetime=1h
-              dpdaction=clear
-              auto=add
+          [vpn-secrets]
+          ipsec-psk=${{ secrets.VPN_PSK }}
+
+          [ipv4]
+          method=auto
+
+          [ipv6]
+          addr-gen-mode=stable-privacy
+          method=auto
+
+          [proxy]
           EOF'
-          
-          sudo bash -c 'cat > /etc/ipsec.secrets <<EOF
-          ${{ secrets.VPN_GATEWAY }} : PSK "${{ secrets.VPN_PSK }}"
-          EOF'
-          
-          sudo bash -c 'cat > /etc/xl2tpd/xl2tpd.conf << EOF
-          [global]
-          ipsec saref = yes
-
-          [lns default]
-          ip range = 192.168.1.100-192.168.1.200
-          local ip = 192.168.1.1
-          require chap = no
-          refuse pap = yes
-          require authentication = yes
-          name = L2TP-Server
-          ppp debug = yes
-          pppoptfile = /etc/ppp/options.l2tpd
-          length bit = yes
-          EOF'
-
-          sudo bash -c 'cat > /etc/ppp/options.xl2tpd << EOF
-          ipcp-accept-local
-          ipcp-accept-remote
-          ms-dns 8.8.8.8
-          ms-dns 8.8.4.4
-          noccp
-          auth
-          mtu 1410
-          mru 1410
-          lock
-          hide-password
-          modem
-          name "${{ secrets.VPN_NT_DOMAIN }}\\${{ secrets.VPN_USERNAME }}"
-          password "${{ secrets.VPN_PASSWORD }}"
-          lcp-echo-interval 30
-          lcp-echo-failure 4
-          refuse-eap
-          refuse-pap
-          refuse-chap
-          require-mschap-v2
-          EOF'
-
-          sudo systemctl restart strongswan-starter xl2tpd
-          sudo ipsec restart
 
       - name: Setup SSH Key for Dokku
         run: |
@@ -96,9 +66,7 @@ jobs:
       - name: Connect to VPN
         run: |
           echo "Connecting to VPN..."
-          sudo ipsec up L2TP-PSK
-          echo "c L2TP-PSK" | sudo tee /var/run/xl2tpd/l2tp-control
-          sudo ifconfig ppp0 up
+          nmcli connection up vpn
 
       - name: Deploy to Dokku (while connected to VPN)
         run: |
@@ -110,5 +78,4 @@ jobs:
         if: always()
         run: |
           echo "Disconnecting VPN..."
-          echo "d L2TP-PSK" | sudo tee /var/run/xl2tpd/l2tp-control
-          sudo ipsec down L2TP-PSK
+          nmcli connection down vpn
