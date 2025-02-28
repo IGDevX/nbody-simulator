@@ -13,7 +13,7 @@ jobs:
       - name: Setup
         run: |
           sudo apt update
-          sudo apt install -y network-manager
+          sudo apt install -y network-manager-l2tp network-manager-l2tp-gnome
 
       - name: Configure nm
         run: |
