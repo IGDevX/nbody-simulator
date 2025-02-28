@@ -15,9 +15,8 @@ jobs:
           sudo apt update
           sudo apt install -y network-manager-l2tp network-manager-l2tp-gnome
 
-      - name: Configure nm
+      - name: Configure VPN nm connection
         run: |
-          echo "Configuring nm..."
           sudo bash -c 'cat > /etc/NetworkManager/system-connections/myvpn.nmconnection <<EOF
           [connection]
           id=myvpn
@@ -59,6 +58,30 @@ jobs:
           sudo chown root:root /etc/NetworkManager/system-connections/myvpn.nmconnection
           sudo chmod 600 /etc/NetworkManager/system-connections/myvpn.nmconnection
 
+      - name: Configure eth0 nm connection
+        run: |
+          sudo bash -c 'cat > /etc/NetworkManager/system-connections/eth0.nmconnection <<EOF
+          [connection]
+          id=eth0
+          uuid=$(uuidgen)
+          type=ethernet
+          autoconnect=true
+          interface-name=eth0
+
+          [ethernet]
+          mac-address-blacklist=
+
+          [ipv4]
+          method=auto
+
+          [ipv6]
+          method=auto
+          EOF'
+          sudo chown root:root /etc/NetworkManager/system-connections/eth0.nmconnection
+          sudo chmod 600 /etc/NetworkManager/system-connections/eth0.nmconnection
+
+      - name: Configure nm
+        run: |
           sudo sed -i 's/managed=false/managed=true/g' /etc/NetworkManager/NetworkManager.conf
           sudo bash -c 'cat > /etc/network/interfaces <<EOF
           auto lo
