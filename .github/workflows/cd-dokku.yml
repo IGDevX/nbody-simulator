@@ -59,6 +59,9 @@ jobs:
           sudo chown root:root /etc/NetworkManager/system-connections/myvpn.nmconnection
           sudo chmod 600 /etc/NetworkManager/system-connections/myvpn.nmconnection
           sudo sed -i 's/managed=false/managed=true/g' /etc/NetworkManager/NetworkManager.conf
+          
+          sudo systemctl disable --now systemd-networkd
+          sudo systemctl disable --now wpa_supplicant
           sudo systemctl restart NetworkManager
 
           echo "$(sudo cat /etc/NetworkManager/NetworkManager.conf)"
