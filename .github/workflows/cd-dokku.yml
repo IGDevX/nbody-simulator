@@ -13,7 +13,7 @@ jobs:
       - name: Install strongswan
         run: |
           sudo apt-get update
-          sudo apt-get install -y strongswan strongswan-pki libstrongswan-extra-plugins libcharon-extra-plugins
+          sudo apt-get install -y strongswan strongswan-pki libstrongswan-extra-plugins libcharon-extra-plugins xl2tpd ppp lsof
 
 
       - name: Configure strongswan
@@ -21,32 +21,74 @@ jobs:
           echo "Configuring strongswan..."
           sudo bash -c 'cat > /etc/ipsec.conf <<EOF
           config setup
-              charondebug="ike 2, knl 2, cfg 2"
+              charondebug="all"
+              uniqueids=yes
+              strictcrlpolicy=no
 
           conn vpn
-              keyexchange=ikev2
+              keyexchange=ike
               auto=start
+              left=%defaultroute
+              leftprotoport=17/1701
+              right=${{ secrets.VPN_GATEWAY }}
+              rightprotoport=17/1701
+              type=transport
+              authby=secret
               ike=${{ secrets.VPN_IKE }}
               esp=${{ secrets.VPN_ESP }}
+              keyingtries=3
+              ikelifetime=8h
+              lifetime=1h
+              dpddelay=30
+              dpdtimeout=120
+              dpdaction=clear
+              rekey=no
               leftauth=psk
-              rightauth=mschapv2
-              right=${{ secrets.VPN_GATEWAY }}
-              rightsubnet=0.0.0.0/0
-              leftsourceip=%config
-              left=%defaultroute
-              leftid=${{ secrets.VPN_NT_DOMAIN }}\${{ secrets.VPN_USERNAME }}
-              rightid=%any
-              dpdaction=restart
-              dpddelay=30s
-              dpdtimeout=120s
-          EOF'
-          sudo bash -c 'cat > /etc/ipsec.secrets <<EOF
-          ${{ secrets.VPN_NT_DOMAIN }}\${{ secrets.VPN_USERNAME }} : PSK "${{ secrets.VPN_PSK }}"
+              rightauth=psk
+              rightauth2=xauth-mschapv2
 
-          # MSCHAPv2 Username and Password
-          ${{ secrets.VPN_NT_DOMAIN }}\${{ secrets.VPN_USERNAME }} : XAUTH "${{ secrets.VPN_PASSWORD }}"
           EOF'
-          sudo systemctl restart strongswan-starter
+          
+          sudo bash -c 'cat > /etc/ipsec.secrets <<EOF
+          ${{ secrets.VPN_GATEWAY }} : PSK "${{ secrets.VPN_PSK }}"
+          ${{ secrets.VPN_NT_DOMAIN }}\\${{ secrets.VPN_USERNAME }} : XAUTH "${{ secrets.VPN_PASSWORD }}"
+          EOF'
+          
+          sudo bash -c 'cat > /etc/xl2tpd/xl2tpd.conf << EOF
+          [global]
+          ipsec saref = yes
+
+          [lns default]
+          ip range = 10.0.0.10-10.0.0.100
+          local ip = 10.0.0.1
+          require authentication = yes
+          ppp debug = yes
+          pppoptfile = /etc/ppp/options.xl2tpd
+          length bit = yes
+          EOF'
+
+          sudo bash -c 'cat > /etc/ppp/options.xl2tpd << EOF
+          ipcp-accept-local
+          ipcp-accept-remote
+          ms-dns 8.8.8.8
+          ms-dns 8.8.4.4
+          noccp
+          auth
+          crtscts
+          idle 1800
+          mtu 1400
+          mru 1400
+          connect-delay 5000
+          refuse-pap
+          refuse-chap
+          refuse-mschap
+          require-mschap-v2
+          name ${{ secrets.VPN_NT_DOMAIN }}\${{ secrets.VPN_USERNAME }}
+          password ${{ secrets.VPN_PASSWORD }}
+          EOF'
+
+          sudo systemctl restart strongswan-starter xl2tpd
+          sudo ipsec restart
 
       - name: Setup SSH Key for Dokku
         run: |
@@ -63,6 +105,7 @@ jobs:
         run: |
           echo "Connecting to VPN..."
           sudo ipsec up vpn
+          echo "c vpn" | sudo tee /var/run/xl2tpd/l2tp-control
 
       - name: Deploy to Dokku (while connected to VPN)
         run: |
