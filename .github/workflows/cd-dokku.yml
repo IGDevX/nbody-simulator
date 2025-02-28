@@ -58,28 +58,6 @@ jobs:
           sudo chown root:root /etc/NetworkManager/system-connections/myvpn.nmconnection
           sudo chmod 600 /etc/NetworkManager/system-connections/myvpn.nmconnection
 
-      - name: Configure eth0 nm connection
-        run: |
-          sudo bash -c 'cat > /etc/NetworkManager/system-connections/eth0.nmconnection <<EOF
-          [connection]
-          id=eth0
-          uuid=$(uuidgen)
-          type=ethernet
-          autoconnect=true
-          interface-name=eth0
-
-          [ethernet]
-          mac-address-blacklist=
-
-          [ipv4]
-          method=auto
-
-          [ipv6]
-          method=auto
-          EOF'
-          sudo chown root:root /etc/NetworkManager/system-connections/eth0.nmconnection
-          sudo chmod 600 /etc/NetworkManager/system-connections/eth0.nmconnection
-
       - name: Configure nm
         run: |
           sudo sed -i 's/managed=false/managed=true/g' /etc/NetworkManager/NetworkManager.conf
@@ -89,16 +67,24 @@ jobs:
           EOF'
           sudo touch /etc/NetworkManager/conf.d/10-globally-managed-devices.conf
 
-          sudo systemctl stop systemd-networkd
-          sudo systemctl disable systemd-networkd
+          sudo systemctl stop systemd-networkd.socket systemd-networkd
+          sudo systemctl disable systemd-networkd.socket systemd-networkd
+          sudo systemctl mask systemd-networkd.socket systemd-networkd
+
+          sudo rm -rf /etc/systemd/network/*
+          sudo rm -rf /lib/systemd/network/*
+
+          sudo nmcli device set eth0 managed yes
+
+          sudo nmcli connection add type ethernet ifname eth0 con-name eth0
+          sudo nmcli connection up eth0
 
           sudo systemctl restart NetworkManager
 
-          echo "$(nmcli dev status)"
           nmcli general status
           nmcli device status
           nmcli dev show eth0 | grep GENERAL.STATE
-          grep -r "unmanaged-devices" /etc/NetworkManager/
+          sudo grep -r "unmanaged-devices" /etc/NetworkManager/
 
       - name: Setup SSH Key for Dokku
         run: |
