@@ -64,19 +64,23 @@ jobs:
           auto lo
           iface lo inet loopback
           EOF'
+
+          sudo bash -c 'cat > /etc/NetworkManager/NetworkManager.conf <<EOF
+          [main]
+          plugins=ifupdown,keyfile
+
+          [ifupdown]
+          managed=true
+
+          [keyfile]
+          unmanaged-devices=*,except:type:wifi,except:type:gsm,except:type:cdma,except:type:wwan,except:type:ethernet,except:type:vlan
+
+          [device]
+          wifi.scan-rand-mac-address=no
+          EOF'
+
           sudo touch /etc/NetworkManager/conf.d/10-globally-managed-devices.conf
 
-          sudo systemctl stop systemd-networkd systemd-networkd.socket
-          sudo systemctl disable systemd-networkd systemd-networkd.socket
-          sudo systemctl mask systemd-networkd
-
-          sudo rm -f /run/systemd/network/10-netplan-eth0.network
-          sudo rm -rf /etc/netplan/*.yaml  # Remove any old netplan configs
-          sudo touch /etc/netplan/empty.yaml  # Create an empty file to prevent errors
-          sudo netplan generate
-          sudo netplan apply
-
-          sudo nmcli device set eth0 managed yes
           sudo systemctl restart NetworkManager
 
           echo "$(nmcli dev status)"
