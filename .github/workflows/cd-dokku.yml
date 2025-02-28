@@ -13,18 +13,40 @@ jobs:
       - name: Install VPNC
         run: |
           sudo apt-get update
-          sudo apt-get install -y vpnc
+          sudo apt-get install -y strongswan strongswan-pki libstrongswan-extra-plugins libcharon-extra-plugins
+
 
       - name: Configure VPNC
         run: |
           echo "Configuring VPNC..."
-          sudo bash -c 'cat > /etc/vpnc/default.conf <<EOF
-          IPSec gateway ${{ secrets.VPN_GATEWAY }}
-          Xauth username ${{ secrets.VPN_USERNAME }}
-          Xauth password ${{ secrets.VPN_PASSWORD }}
-          Domain ${{ secrets.VPN_NT_DOMAIN }}
+          sudo bash -c 'cat > /etc/ipsec.conf <<EOF
+          config setup
+              charondebug="ike 2, knl 2, cfg 2"
+
+          conn vpn
+              keyexchange=ikev2
+              auto=start
+              ike=${{ secrets.VPN_IKE }}
+              esp=${{ secrets.VPN_ESP }}
+              leftauth=psk
+              rightauth=mschapv2
+              right=${{ secrets.VPN_GATEWAY }}
+              rightsubnet=0.0.0.0/0
+              leftsourceip=%config
+              left=%defaultroute
+              leftid=${{ secrets.VPN_NT_DOMAIN }}\${{ secrets.VPN_USERNAME }}
+              rightid=%any
+              dpdaction=restart
+              dpddelay=30s
+              dpdtimeout=120s
           EOF'
-          sudo chmod 600 /etc/vpnc/default.conf
+          sudo bash -c 'cat > /etc/ipsec.secrets <<EOF
+          ${{ secrets.VPN_NT_DOMAIN }}\${{ secrets.VPN_USERNAME }} : PSK "${{ secrets.VPN_PSK }}"
+
+          # MSCHAPv2 Username and Password
+          ${{ secrets.VPN_NT_DOMAIN }}\${{ secrets.VPN_USERNAME }} : XAUTH "${{ secrets.VPN_PASSWORD }}"
+          EOF'
+          sudo systemctl restart strongswan
 
       - name: Setup SSH Key for Dokku
         run: |
@@ -40,7 +62,7 @@ jobs:
       - name: Connect to VPN
         run: |
           echo "Connecting to VPN..."
-          sudo vpnc-connect
+          sudo ipsec up vpn
 
       - name: Deploy to Dokku (while connected to VPN)
         run: |
@@ -52,4 +74,4 @@ jobs:
         if: always()
         run: |
           echo "Disconnecting VPN..."
-          sudo vpnc-disconnect || echo "VPN already disconnected."
+          sudo ipsec down vpn
