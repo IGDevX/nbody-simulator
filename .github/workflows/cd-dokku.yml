@@ -46,7 +46,7 @@ jobs:
 
       - name: Deploy to Dokku (while connected to VPN)
         run: |
-          git remote add dokku ${{ secrets.DOKKU_ADDR }}:nbody-simulator-backend
+          git remote add dokku dokku@${{ secrets.DOKKU_ADDR }}:nbody-simulator-backend
           git push dokku prod:master
 
       - name: Disconnect VPN
