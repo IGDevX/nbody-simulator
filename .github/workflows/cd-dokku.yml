@@ -61,6 +61,7 @@ jobs:
           sudo sed -i 's/managed=false/managed=true/g' /etc/NetworkManager/NetworkManager.conf
           sudo systemctl restart NetworkManager
 
+          echo "$(sudo cat /etc/NetworkManager/NetworkManager.conf)"
           echo "$(nmcli dev status)"
 
       - name: Setup SSH Key for Dokku
