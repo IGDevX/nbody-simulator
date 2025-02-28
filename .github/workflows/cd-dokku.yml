@@ -38,6 +38,8 @@ jobs:
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
           ssh-keyscan -H "${{ secrets.DOKKU_ADDR }}" >> ~/.ssh/known_hosts
+          echo "Testing SSH connection..."
+          ssh -v dokku@${{ secrets.DOKKU_ADDR }} "echo SSH connection successful"
 
       - name: Connect to VPN
         run: |
