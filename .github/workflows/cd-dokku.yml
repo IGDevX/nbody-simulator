@@ -69,7 +69,7 @@ jobs:
           sudo systemctl restart NetworkManager
 
           echo "$(nmcli dev status)"
-
+          echo "$(systemctl status systemd-networkd)"
 
       - name: Setup SSH Key for Dokku
         run: |
