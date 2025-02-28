@@ -28,7 +28,7 @@ jobs:
 
       - name: Connect to VPN
         run: |
-          sudo vpnc vpnc --no-detach --background
+          sudo vpnc
 
       - name: Run your job (while connected to VPN)
         run: |
