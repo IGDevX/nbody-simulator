@@ -12,46 +12,33 @@ jobs:
     steps:
       - name: Install strongswan
         run: |
-          sudo apt-get update
-          sudo apt-get install -y strongswan strongswan-pki libstrongswan-extra-plugins libcharon-extra-plugins xl2tpd ppp lsof
-
+          sudo apt update && sudo apt install -y strongswan xl2tpd ppp lsof
 
       - name: Configure strongswan
         run: |
           echo "Configuring strongswan..."
           sudo bash -c 'cat > /etc/ipsec.conf <<EOF
           config setup
-              charondebug="all"
-              uniqueids=yes
-              strictcrlpolicy=no
+              charondebug="ike 2, knl 2, cfg 2"
 
-          conn vpn
-              keyexchange=ike
-              auto=start
+          conn L2TP-PSK
+              keyexchange=ikev1
               left=%defaultroute
-              leftprotoport=17/1701
+              leftauth=psk
               right=${{ secrets.VPN_GATEWAY }}
-              rightprotoport=17/1701
-              type=transport
-              authby=secret
+              rightauth=psk
+              rightsubnet=0.0.0.0/0
               ike=${{ secrets.VPN_IKE }}
               esp=${{ secrets.VPN_ESP }}
               keyingtries=3
               ikelifetime=8h
               lifetime=1h
-              dpddelay=30
-              dpdtimeout=120
               dpdaction=clear
-              rekey=no
-              leftauth=psk
-              rightauth=psk
-              rightauth2=xauth-mschapv2
-
+              auto=add
           EOF'
           
           sudo bash -c 'cat > /etc/ipsec.secrets <<EOF
           ${{ secrets.VPN_GATEWAY }} : PSK "${{ secrets.VPN_PSK }}"
-          ${{ secrets.VPN_NT_DOMAIN }}\\${{ secrets.VPN_USERNAME }} : XAUTH "${{ secrets.VPN_PASSWORD }}"
           EOF'
           
           sudo bash -c 'cat > /etc/xl2tpd/xl2tpd.conf << EOF
@@ -59,11 +46,14 @@ jobs:
           ipsec saref = yes
 
           [lns default]
-          ip range = 10.0.0.10-10.0.0.100
-          local ip = 10.0.0.1
+          ip range = 192.168.1.100-192.168.1.200
+          local ip = 192.168.1.1
+          require chap = no
+          refuse pap = yes
           require authentication = yes
+          name = L2TP-Server
           ppp debug = yes
-          pppoptfile = /etc/ppp/options.xl2tpd
+          pppoptfile = /etc/ppp/options.l2tpd
           length bit = yes
           EOF'
 
@@ -74,17 +64,19 @@ jobs:
           ms-dns 8.8.4.4
           noccp
           auth
-          crtscts
-          idle 1800
-          mtu 1400
-          mru 1400
-          connect-delay 5000
+          mtu 1410
+          mru 1410
+          lock
+          hide-password
+          modem
+          name "${{ secrets.VPN_NT_DOMAIN }}\\${{ secrets.VPN_USERNAME }}"
+          password "${{ secrets.VPN_PASSWORD }}"
+          lcp-echo-interval 30
+          lcp-echo-failure 4
+          refuse-eap
           refuse-pap
           refuse-chap
-          refuse-mschap
           require-mschap-v2
-          name ${{ secrets.VPN_NT_DOMAIN }}\${{ secrets.VPN_USERNAME }}
-          password ${{ secrets.VPN_PASSWORD }}
           EOF'
 
           sudo systemctl restart strongswan-starter xl2tpd
@@ -104,8 +96,9 @@ jobs:
       - name: Connect to VPN
         run: |
           echo "Connecting to VPN..."
-          sudo ipsec up vpn
-          echo "c vpn" | sudo tee /var/run/xl2tpd/l2tp-control
+          sudo ipsec up L2TP-PSK
+          echo "c L2TP-PSK" | sudo tee /var/run/xl2tpd/l2tp-control
+          sudo ifconfig ppp0 up
 
       - name: Deploy to Dokku (while connected to VPN)
         run: |
@@ -117,4 +110,5 @@ jobs:
         if: always()
         run: |
           echo "Disconnecting VPN..."
-          sudo ipsec down vpn
+          echo "d L2TP-PSK" | sudo tee /var/run/xl2tpd/l2tp-control
+          sudo ipsec down L2TP-PSK
