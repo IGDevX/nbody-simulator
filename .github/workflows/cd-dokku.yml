@@ -31,9 +31,7 @@ jobs:
         run: |
           echo "Setting up SSH key..."
           mkdir -p ~/.ssh
-          sudo bash -c 'cat > ~/.ssh/id_rsa <<EOF
-          ${{ secrets.DOKKU_SSH_KEY }}
-          EOF'
+          printf "%s" "${{ secrets.DOKKU_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
