@@ -60,12 +60,7 @@ jobs:
           sudo chmod 600 /etc/NetworkManager/system-connections/myvpn.nmconnection
           sudo systemctl restart NetworkManager
 
-          DEVICE=$(nmcli --get-values DEVICE connection show --active | head -n 1)
-          sudo nmcli connection modify myvpn connection.secondaries "$DEVICE"
-          sudo nmcli connection modify myvpn ipv4.gateway "0.0.0.0"
-          sudo nmcli connection modify myvpn ipv4.never-default no
-
-          sudo systemctl restart NetworkManager
+          echo "$(nmcli dev status)"
 
       - name: Setup SSH Key for Dokku
         run: |
