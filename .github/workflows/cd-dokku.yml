@@ -1,0 +1,41 @@
+name: Connect to VPN
+
+on:
+  push:
+    branches:
+      - prod
+
+jobs:
+  vpn-connect:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install VPNC
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y vpnc
+
+      - name: Configure VPNC
+        run: |
+          sudo bash -c 'cat > /etc/vpnc/vpnc.conf <<EOF
+          IPSec gateway ${{ secrets.VPN_GATEWAY }}
+          Xauth username ${{ secrets.VPN_USERNAME }}
+          Xauth password ${{ secrets.VPN_PASSWORD }}
+          Domain ${{ secrets.VPN_NT_DOMAIN }}
+          EOF'
+          sudo bash -c 'cat > ~/.ssh/dokku <<EOF
+          ${{ secrets.DOKKU_SSH_KEY }}'
+
+      - name: Connect to VPN
+        run: |
+          sudo vpnc vpnc --no-detach --background
+
+      - name: Run your job (while connected to VPN)
+        run: |
+          git remote add dokku ${{ secrets.DOKKU_ADDR }}:nbody-simulator-backend
+          git push dokku prod:master
+
+      - name: Disconnect VPN
+        run: |
+          sudo vpnc-disconnect
+
