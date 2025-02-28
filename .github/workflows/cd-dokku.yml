@@ -66,11 +66,17 @@ jobs:
           EOF'
           sudo touch /etc/NetworkManager/conf.d/10-globally-managed-devices.conf
 
-          sudo systemctl stop systemd-networkd
-          sudo systemctl disable systemd-networkd
-          sudo systemctl stop systemd-networkd.socket
-          sudo systemctl disable systemd-networkd.socket
+          sudo systemctl stop systemd-networkd systemd-networkd.socket
+          sudo systemctl disable systemd-networkd systemd-networkd.socket
+          sudo systemctl mask systemd-networkd
 
+          sudo rm -f /run/systemd/network/10-netplan-eth0.network
+          sudo rm -rf /etc/netplan/*.yaml  # Remove any old netplan configs
+          sudo touch /etc/netplan/empty.yaml  # Create an empty file to prevent errors
+          sudo netplan generate
+          sudo netplan apply
+
+          sudo nmcli device set eth0 managed yes
           sudo systemctl restart NetworkManager
 
           echo "$(nmcli dev status)"
