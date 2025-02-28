@@ -10,15 +10,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install VPNC
+      - name: Install strongswan
         run: |
           sudo apt-get update
           sudo apt-get install -y strongswan strongswan-pki libstrongswan-extra-plugins libcharon-extra-plugins
 
 
-      - name: Configure VPNC
+      - name: Configure strongswan
         run: |
-          echo "Configuring VPNC..."
+          echo "Configuring strongswan..."
           sudo bash -c 'cat > /etc/ipsec.conf <<EOF
           config setup
               charondebug="ike 2, knl 2, cfg 2"
@@ -46,7 +46,7 @@ jobs:
           # MSCHAPv2 Username and Password
           ${{ secrets.VPN_NT_DOMAIN }}\${{ secrets.VPN_USERNAME }} : XAUTH "${{ secrets.VPN_PASSWORD }}"
           EOF'
-          sudo systemctl restart strongswan
+          sudo systemctl restart strongswan-starter
 
       - name: Setup SSH Key for Dokku
         run: |
