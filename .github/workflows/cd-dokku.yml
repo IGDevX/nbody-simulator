@@ -40,7 +40,7 @@ jobs:
       - name: Connect to VPN
         run: |
           echo "Connecting to VPN..."
-          sudo vpnc
+          sudo vpnc-connect
 
       - name: Deploy to Dokku (while connected to VPN)
         run: |
