@@ -71,9 +71,6 @@ jobs:
           sudo systemctl disable systemd-networkd.socket systemd-networkd
           sudo systemctl mask systemd-networkd.socket systemd-networkd
 
-          sudo rm -rf /etc/systemd/network/*
-          sudo rm -rf /lib/systemd/network/*
-
           sudo nmcli device set eth0 managed yes
 
           sudo nmcli connection add type ethernet ifname eth0 con-name eth0
