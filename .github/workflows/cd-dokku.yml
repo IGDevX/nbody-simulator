@@ -59,25 +59,11 @@ jobs:
           sudo chown root:root /etc/NetworkManager/system-connections/myvpn.nmconnection
           sudo chmod 600 /etc/NetworkManager/system-connections/myvpn.nmconnection
 
+          sudo sed -i 's/managed=false/managed=true/g' /etc/NetworkManager/NetworkManager.conf
           sudo bash -c 'cat > /etc/network/interfaces <<EOF
           auto lo
           iface lo inet loopback
           EOF'
-
-          sudo bash -c 'cat > /etc/NetworkManager/NetworkManager.conf <<EOF
-          [main]
-          plugins=ifupdown,keyfile
-
-          [ifupdown]
-          managed=true
-
-          [keyfile]
-          unmanaged-devices=*,except:type:wifi,except:type:gsm,except:type:cdma,except:type:wwan,except:type:ethernet,except:type:vlan
-
-          [device]
-          wifi.scan-rand-mac-address=no
-          EOF'
-
           sudo touch /etc/NetworkManager/conf.d/10-globally-managed-devices.conf
 
           sudo systemctl stop systemd-networkd
