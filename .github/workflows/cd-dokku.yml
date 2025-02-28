@@ -58,6 +58,7 @@ jobs:
           EOF'
           sudo chown root:root /etc/NetworkManager/system-connections/myvpn.nmconnection
           sudo chmod 600 /etc/NetworkManager/system-connections/myvpn.nmconnection
+          sudo sed -i 's/managed=false/managed=true/g' /etc/NetworkManager/NetworkManager.conf
           sudo systemctl restart NetworkManager
 
           echo "$(nmcli dev status)"
