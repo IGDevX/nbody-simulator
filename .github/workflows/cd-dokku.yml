@@ -102,6 +102,7 @@ jobs:
         run: |
           sudo ipsec status
           sudo ipsec statusall
+          sudo ifconfig
           wget -qO- http://ipv4.icanhazip.com; echo
 
       - name: Disconnect VPN
