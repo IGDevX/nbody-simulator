@@ -73,8 +73,8 @@ jobs:
       - name: Verify VPN Connection
         if: always()
         run: |
-          journalctl -xeu NetworkManager | tail -n 50
-          nmcli connection show my-vpn | grep -E 'ike|esp'
+          journalctl -xeu NetworkManager | grep vpn
+          sudo tail -f /var/log/syslog | grep ppp
 
       - name: Disconnect VPN
         if: always()
