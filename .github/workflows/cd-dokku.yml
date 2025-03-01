@@ -75,6 +75,9 @@ jobs:
           sudo ipsec up myvpn
           echo "c myvpn" | sudo tee /var/run/xl2tpd/l2tp-control
 
+          route add ${{ secrets.VPN_GATEWAY }} gw 10.1.0.1
+          route add default dev ppp0
+
       - name: Setup SSH Key for Dokku
         run: |
           echo "Setting up SSH key..."
@@ -98,8 +101,7 @@ jobs:
       - name: Verify VPN Connection
         if: always()
         run: |
-          ifconfig
-          ip route
+          wget -qO- http://ipv4.icanhazip.com; echo
 
       - name: Disconnect VPN
         if: always()
