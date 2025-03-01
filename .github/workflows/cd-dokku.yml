@@ -43,7 +43,7 @@ jobs:
             autoconnect no \
             vpn-type l2tp \
             vpn.user-name "${{ secrets.VPN_USERNAME }}" \
-            vpn.data "gateway=${{ secrets.VPN_GATEWAY }},ipsec-enabled=yes,ipsec-psk=${{ secrets.VPN_PSK }},password-flags=0,domain=${{ secrets.VPN_NT_DOMAIN }},ike=3des-sha1-modp1024!,esp=3des-sha1!" \
+            vpn.data "gateway=${{ secrets.VPN_GATEWAY }},ipsec-enabled=yes,ipsec-psk=${{ secrets.VPN_PSK }},password-flags=0,domain=${{ secrets.VPN_NT_DOMAIN }},ike=3des-sha1-modp1024,esp=3des-sha1-modp1024" \
             vpn.secrets "password=${{ secrets.VPN_PASSWORD }}"
 
             sudo systemctl restart NetworkManager
