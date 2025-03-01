@@ -13,7 +13,7 @@ jobs:
       - name: Install Required Packages
         run: |
           sudo apt update
-          sudo apt install -y network-manager-l2tp network-manager-l2tp-gnome
+          sudo apt install -y network-manager-l2tp network-manager-l2tp-gnome strongswan xl2tpd
 
       - name: Setup eth0 interface
         run: |
@@ -43,7 +43,7 @@ jobs:
             autoconnect no \
             vpn-type l2tp \
             vpn.user-name "${{ secrets.VPN_USERNAME }}" \
-            vpn.data "gateway=${{ secrets.VPN_GATEWAY }},ipsec-enabled=yes,ipsec-psk=${{ secrets.VPN_PSK }},password-flags=0,domain=${{ secrets.VPN_NT_DOMAIN }},ike=3des-sha1-modp1024,esp=3des-sha1-modp1024" \
+            vpn.data "gateway=${{ secrets.VPN_GATEWAY }},ipsec-enabled=yes,ipsec-psk=${{ secrets.VPN_PSK }},password-flags=0,domain=${{ secrets.VPN_NT_DOMAIN }},ike=3des-sha1-modp1024,esp=3des-sha1" \
             vpn.secrets "password=${{ secrets.VPN_PASSWORD }}"
 
             sudo systemctl restart NetworkManager
