@@ -75,8 +75,8 @@ jobs:
           sudo ipsec up myvpn
           echo "c myvpn" | sudo tee /var/run/xl2tpd/l2tp-control
 
-          route add ${{ secrets.VPN_GATEWAY }} gw 10.1.0.1
-          route add default dev ppp0
+          sudo route add ${{ secrets.VPN_GATEWAY }} gw 10.1.0.1
+          sudo route add default dev ppp0
 
       - name: Setup SSH Key for Dokku
         run: |
