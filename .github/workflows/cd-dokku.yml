@@ -34,7 +34,7 @@ jobs:
           machine-auth-type=psk
           mru=1400
           mtu=1400
-          password-flags=1
+          password-flags=0
           refuse-chap=yes
           refuse-eap=yes
           refuse-mschap=yes
@@ -45,6 +45,7 @@ jobs:
 
           [vpn-secrets]
           ipsec-psk=${{ secrets.VPN_PSK }}
+          password=${{ secrets.VPN_PASSWORD }}
 
           [ipv4]
           method=auto
@@ -55,7 +56,6 @@ jobs:
 
           [proxy]
           EOF'
-          sudo nmcli connection modify myvpn vpn.secrets password=${{ secrets.VPN_PASSWORD }}
           sudo chown root:root /etc/NetworkManager/system-connections/myvpn.nmconnection
           sudo chmod 600 /etc/NetworkManager/system-connections/myvpn.nmconnection
 
