@@ -74,6 +74,7 @@ jobs:
         if: always()
         run: |
           journalctl -xeu NetworkManager | tail -n 50
+          nmcli connection show my-vpn | grep -E 'ike|esp'
 
       - name: Disconnect VPN
         if: always()
