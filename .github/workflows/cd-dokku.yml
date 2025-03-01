@@ -73,8 +73,7 @@ jobs:
       - name: Verify VPN Connection
         if: always()
         run: |
-          journalctl -xeu NetworkManager | grep vpn
-          sudo tail -f /var/log/syslog | grep ppp
+          journalctl -xeu strongswan | tail -30
 
       - name: Disconnect VPN
         if: always()
