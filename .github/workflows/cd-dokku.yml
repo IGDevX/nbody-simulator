@@ -10,40 +10,50 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Setup
+      - name: Install VPN dependencies
         run: |
-          sudo apt update
-          sudo apt install -y network-manager-l2tp network-manager-l2tp-gnome xl2tpd strongswan
+          sudo apt-get update
+          sudo apt-get install -y strongswan xl2tpd ppp
 
-      - name: Configure nm
+      - name: Configure IPsec
         run: |
-          sudo bash -c 'cat > /etc/ipsec.conf <<EOF
+          cat <<EOF | sudo tee /etc/ipsec.conf
           config setup
-              charondebug="ike 2, knl 2, cfg 2"
+              uniqueids=no
+              charondebug="all"
 
-          conn L2TP-VPN
+          conn L2TP-PSK
               keyexchange=ikev1
-              type=transport
-              authby=secret
-              left=%defaultroute
+              dpdaction=clear
+              dpddelay=30
+              rekey=no
+              left=%any
               leftprotoport=17/1701
               right=${{ secrets.VPN_GATEWAY }}
               rightprotoport=17/1701
+              rightsubnet=0.0.0.0/0
+              auto=add
               ike=${{ secrets.VPN_IKE }}
               esp=${{ secrets.VPN_ESP }}
-              dpdaction=clear
-              dpddelay=300s
-              auto=start
-              forceencaps=yes
-          EOF'
+              authby=secret
+          EOF
 
-          sudo bash -c 'cat > /etc/ipsec.secrets <<EOF
-          : PSK "${{ secrets.VPN_PSK }}"
-          EOF'
+      - name: Set up IPsec secrets
+        run: |
+          echo "${{ secrets.VPN_GATEWAY }} : PSK \"${{ secrets.VPN_PSK }}\"" | sudo tee /etc/ipsec.secrets
 
-          sudo bash -c 'cat > /etc/xl2tpd/xl2tpd.conf <<EOF
+      - name: Restart IPsec and establish tunnel
+        run: |
+          sudo systemctl restart strongswan-starter
+          sudo ipsec restart
+          sudo ipsec up L2TP-PSK
+
+      - name: Configure L2TP tunnel
+        run: |
+          cat <<EOF | sudo tee /etc/xl2tpd/xl2tpd.conf
           [global]
           ipsec saref = yes
+          listen-addr = ${{ secrets.VPN_GATEWAY }}
 
           [lns default]
           ip range = 192.168.1.100-192.168.1.200
@@ -51,32 +61,44 @@ jobs:
           refuse pap = yes
           require authentication = yes
           ppp debug = yes
-          pppoptfile = /etc/ppp/options.l2tpd.client
+          pppoptfile = /etc/ppp/options.l2tpd
           length bit = yes
-          EOF'
+          EOF
 
-          sudo bash -c 'cat > /etc/ppp/options.l2tpd.client <<EOF
-          ipcp-accept-local
-          ipcp-accept-remote
-          ms-dns 8.8.8.8
-          ms-dns 8.8.4.4
-          noccp
-          auth
-          mtu 1400
-          mru 1400
-          connect-delay 5000
-          name "${{ secrets.VPN_USERNAME }}"
-          password "${{ secrets.VPN_PASSWORD }}"
-          domain "${{ secrets.VPN_NT_DOMAIN }}"
-          refuse-eap
+      - name: Configure PPP options
+        run: |
+          cat <<EOF | sudo tee /etc/ppp/options.l2tpd
+          require-mschap-v2
           refuse-pap
           refuse-chap
           refuse-mschap
-          require-mschap-v2
-          EOF'
+          ms-dns 8.8.8.8
+          ms-dns 8.8.4.4
+          auth
+          mtu 1400
+          mru 1400
+          crtscts
+          lock
+          hide-password
+          local
+          noipdefault
+          proxyarp
+          connect-delay 5000
+          name ${{ secrets.VPN_USERNAME }}
+          domain ${{ secrets.VPN_NT_DOMAIN }}
+          password ${{ secrets.VPN_PASSWORD }}
+          EOF
 
-          sudo systemctl restart strongswan-starter
+      - name: Restart L2TP and connect
+        run: |
           sudo systemctl restart xl2tpd
+          sleep 5
+          echo "c L2TP-PSK" | sudo tee /var/run/xl2tpd/l2tp-control
+
+      - name: Verify VPN connection
+        run: |
+          ip a
+          ip route
 
       - name: Setup SSH Key for Dokku
         run: |
@@ -89,27 +111,14 @@ jobs:
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
 
-      - name: Connect to VPN
+      - name: Run tasks after VPN connection
         run: |
-          echo "Connecting to VPN..."
-          sudo ipsec restart
-          sudo ipsec up L2TP-VPN
-          echo "c default" | sudo tee /var/run/xl2tpd/l2tp-control
-          sudo ip route add default dev ppp0
-
-      - name: Debug VPN connection
-        if: always()
-        run: |
-          sudo cat /var/log/syslog | grep charon
-
-      - name: Deploy to Dokku (while connected to VPN)
-        run: |
+          echo "VPN Connected! Now executing required commands..."
           ssh-keyscan -H "${{ secrets.DOKKU_ADDR }}" >> ~/.ssh/known_hosts
           git remote add dokku dokku@${{ secrets.DOKKU_ADDR }}:nbody-simulator-backend
           git push dokku prod:master
 
-      - name: Disconnect VPN
+      - name: Disconnect from VPN
         run: |
-          echo "Disconnecting VPN..."
-          echo "d default" | sudo tee /var/run/xl2tpd/l2tp-control
-          sudo ipsec down L2TP-VPN
+          echo "d L2TP-PSK" | sudo tee /var/run/xl2tpd/l2tp-control
+          sudo ipsec down L2TP-PSK
