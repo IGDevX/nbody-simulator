@@ -99,7 +99,7 @@ jobs:
       - name: Debug VPN connection
         if: always()
         run: |
-          ipsec status
+          sudo ipsec status
           ip a | grep ppp
 
       - name: Deploy to Dokku (while connected to VPN)
