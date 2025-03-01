@@ -27,8 +27,8 @@ jobs:
             leftprotoport=17/1701
             rightprotoport=17/1701
             right=${{ secrets.VPN_GATEWAY }}
-            ike=aes128-sha1-modp1024
-            esp=aes128-sha1
+            ike=3des-sha1-modp1024
+            esp=3des-sha1
           EOF'
 
           sudo bash -c 'cat > /etc/ipsec.secrets <<EOF
@@ -73,7 +73,7 @@ jobs:
           sudo service xl2tpd restart
 
           sudo ipsec up myvpn
-          sudo echo "c myvpn" > /var/run/xl2tpd/l2tp-control
+          echo "c myvpn" | sudo tee /var/run/xl2tpd/l2tp-control
 
       - name: Setup SSH Key for Dokku
         run: |
