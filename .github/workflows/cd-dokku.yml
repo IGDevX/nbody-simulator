@@ -72,7 +72,7 @@ jobs:
       - name: Verify VPN Connection
         if: always()
         run: |
-          journalctl -xe NM_CONNECTION=767b92fa-ff83-4212-b85a-dcc40f4e4592 + NM_DEVICE=eth0
+          nmcli connection show my-vpn
 
       - name: Disconnect VPN
         if: always()
