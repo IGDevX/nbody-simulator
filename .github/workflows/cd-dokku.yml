@@ -101,6 +101,7 @@ jobs:
         run: |
           sudo ipsec status
           ip a | grep ppp
+          sudo cat /var/log/syslog | grep charon
 
       - name: Deploy to Dokku (while connected to VPN)
         run: |
