@@ -74,7 +74,7 @@ jobs:
           require-mschap-v2
           EOF'
 
-          sudo systemctl restart strongswan
+          sudo systemctl restart strongswan-starter
           sudo systemctl restart xl2tpd
 
       - name: Setup SSH Key for Dokku
