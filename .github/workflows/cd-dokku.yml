@@ -73,7 +73,7 @@ jobs:
       - name: Verify VPN Connection
         if: always()
         run: |
-          journalctl -xeu strongswan | tail -30
+          journalctl -xeu strongswan-starter | tail -30
 
       - name: Disconnect VPN
         if: always()
