@@ -99,6 +99,8 @@ jobs:
         if: always()
         run: |
           journalctl -xe NM_CONNECTION=eefb6558-af2c-452b-977a-451219161dbb + NM_DEVICE=eth0
+          systemctl status dbus NetworkManager
+          journalctl -xe | grep -i dbus
 
       - name: Deploy to Dokku (while connected to VPN)
         run: |
