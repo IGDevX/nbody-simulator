@@ -75,7 +75,6 @@ jobs:
           sudo ipsec up myvpn
           echo "c myvpn" | sudo tee /var/run/xl2tpd/l2tp-control
 
-          ip link show
           sudo route add ${{ secrets.VPN_GATEWAY }} gw 10.1.0.1
           sudo route add default dev ppp0
 
@@ -101,6 +100,7 @@ jobs:
       - name: Verify VPN Connection
         if: always()
         run: |
+          ifconfig
           wget -qO- http://ipv4.icanhazip.com; echo
 
       - name: Disconnect VPN
