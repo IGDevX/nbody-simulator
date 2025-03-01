@@ -13,71 +13,69 @@ jobs:
       - name: Setup
         run: |
           sudo apt update
-          sudo apt install -y network-manager-l2tp network-manager-l2tp-gnome
-
-      - name: Configure VPN nm connection
-        run: |
-          sudo bash -c 'cat > /etc/NetworkManager/system-connections/myvpn.nmconnection <<EOF
-          [connection]
-          id=myvpn
-          uuid=eefb6558-af2c-452b-977a-451219161dbb
-          type=vpn
-          autoconnect=false
-          permissions=user:runner:;
-
-          [vpn]
-          domain=${{ secrets.VPN_NT_DOMAIN }}
-          gateway=${{ secrets.VPN_GATEWAY }}
-          ipsec-enabled=yes
-          ipsec-esp=${{ secrets.VPN_ESP }}
-          ipsec-ike=${{ secrets.VPN_IKE }}
-          machine-auth-type=psk
-          mru=1400
-          mtu=1400
-          password-flags=0
-          refuse-chap=yes
-          refuse-eap=yes
-          refuse-mschap=yes
-          refuse-pap=yes
-          user=${{ secrets.VPN_USERNAME }}
-          user-auth-type=password
-          service-type=org.freedesktop.NetworkManager.l2tp
-
-          [vpn-secrets]
-          ipsec-psk=${{ secrets.VPN_PSK }}
-          password=${{ secrets.VPN_PASSWORD }}
-
-          [ipv4]
-          method=auto
-
-          [ipv6]
-          addr-gen-mode=stable-privacy
-          method=auto
-
-          [proxy]
-          EOF'
-          sudo chown root:root /etc/NetworkManager/system-connections/myvpn.nmconnection
-          sudo chmod 600 /etc/NetworkManager/system-connections/myvpn.nmconnection
+          sudo apt install -y network-manager-l2tp network-manager-l2tp-gnome xl2tpd strongswan
 
       - name: Configure nm
         run: |
-          sudo sed -i 's/managed=false/managed=true/g' /etc/NetworkManager/NetworkManager.conf
+          sudo bash -c 'cat > /etc/ipsec.conf <<EOF
+          config setup
+              charondebug="ike 2, knl 2, cfg 2"
 
-          sudo touch /etc/NetworkManager/conf.d/10-globally-managed-devices.conf
+          conn L2TP-VPN
+              keyexchange=ikev1
+              type=transport
+              authby=secret
+              left=%defaultroute
+              leftprotoport=17/1701
+              right=${{ secrets.VPN_GATEWAY }}
+              rightprotoport=17/1701
+              ike=${{ secrets.VPN_IKE }}
+              esp=${{ secrets.VPN_ESP }}
+              dpdaction=clear
+              dpddelay=300s
+              auto=start
+          EOF'
 
-          sudo systemctl stop systemd-networkd.socket
-          sudo systemctl disable systemd-networkd.socket
-          sudo systemctl mask systemd-networkd
-          sudo systemctl restart NetworkManager
+          sudo bash -c 'cat > /etc/ipsec.secrets <<EOF
+          : PSK "${{ secrets.VPN_PSK }}"
+          EOF'
 
-          sudo nmcli connection add type ethernet ifname eth0 con-name eth0
-          sudo nmcli connection modify eth0 connection.autoconnect yes
+          sudo bash -c 'cat > /etc/xl2tpd/xl2tpd.conf <<EOF
+          [global]
+          ipsec saref = yes
 
-          sudo nmcli device set eth0 managed yes
-          
-          sudo nmcli connection up eth0
+          [lns default]
+          ip range = 192.168.1.100-192.168.1.200
+          local ip = 192.168.1.1
+          refuse pap = yes
+          require authentication = yes
+          ppp debug = yes
+          pppoptfile = /etc/ppp/options.l2tpd.client
+          length bit = yes
+          EOF'
 
-          sudo systemctl restart NetworkManager
+          sudo bash -c 'cat > /etc/ppp/options.l2tpd.client <<EOF
+          ipcp-accept-local
+          ipcp-accept-remote
+          ms-dns 8.8.8.8
+          ms-dns 8.8.4.4
+          noccp
+          auth
+          mtu 1400
+          mru 1400
+          connect-delay 5000
+          name "${{ secrets.VPN_USERNAME }}"
+          password "${{ secrets.VPN_PASSWORD }}"
+          domain "${{ secrets.VPN_NT_DOMAIN }}"
+          refuse-eap
+          refuse-pap
+          refuse-chap
+          refuse-mschap
+          require-mschap-v2
+          EOF'
+
+          sudo systemctl restart strongswan
+          sudo systemctl restart xl2tpd
 
       - name: Setup SSH Key for Dokku
         run: |
@@ -93,15 +91,16 @@ jobs:
       - name: Connect to VPN
         run: |
           echo "Connecting to VPN..."
-          sudo nmcli connection up myvpn
+          sudo ipsec restart
+          sudo ipsec up L2TP-VPN
+          echo "c default" | sudo tee /var/run/xl2tpd/l2tp-control
+          sudo ip route add default dev ppp0
 
       - name: Debug VPN connection
         if: always()
         run: |
-          dbus-send --system --print-reply --dest=org.freedesktop.NetworkManager /org/freedesktop/NetworkManager org.freedesktop.NetworkManager.GetDevices
-          nmcli connection show --active
-          nmcli connection show myvpn
-          sudo journalctl -xe | grep vpn
+          ipsec status
+          ip a | grep ppp
 
       - name: Deploy to Dokku (while connected to VPN)
         run: |
@@ -112,4 +111,5 @@ jobs:
       - name: Disconnect VPN
         run: |
           echo "Disconnecting VPN..."
-          nmcli connection down myvpn
+          echo "d default" | sudo tee /var/run/xl2tpd/l2tp-control
+          sudo ipsec down L2TP-VPN
