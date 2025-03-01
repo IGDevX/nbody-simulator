@@ -96,9 +96,11 @@ jobs:
           echo "c L2TP-PSK" | sudo tee /var/run/xl2tpd/l2tp-control
 
       - name: Verify VPN connection
+        if: always()
         run: |
-          ip a
-          ip route
+          sudo journalctl -u strongswan-starter --no-pager --lines=50
+          sudo ipsec statusall
+          sudo ipsec verify
 
       - name: Setup SSH Key for Dokku
         run: |
