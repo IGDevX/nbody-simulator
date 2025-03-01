@@ -78,7 +78,6 @@ jobs:
           sudo nmcli connection up eth0
 
           sudo systemctl restart NetworkManager
-          sudo systemctl restart strongswan-starter
 
       - name: Setup SSH Key for Dokku
         run: |
@@ -99,9 +98,10 @@ jobs:
       - name: Debug VPN connection
         if: always()
         run: |
-          journalctl -xe NM_CONNECTION=eefb6558-af2c-452b-977a-451219161dbb + NM_DEVICE=eth0
-          systemctl status dbus NetworkManager
-          journalctl -xe | grep -i dbus
+          dbus-send --system --print-reply --dest=org.freedesktop.NetworkManager /org/freedesktop/NetworkManager org.freedesktop.NetworkManager.GetDevices
+          nmcli connection show --active
+          nmcli connection show myvpn
+          sudo journalctl -xe | grep vpn
 
       - name: Deploy to Dokku (while connected to VPN)
         run: |
