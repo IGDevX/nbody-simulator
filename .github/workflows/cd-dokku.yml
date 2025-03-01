@@ -73,7 +73,7 @@ jobs:
       - name: Verify VPN Connection
         if: always()
         run: |
-          journalctl -xeu strongswan-starter | tail -30
+          sudo cat /etc/ipsec.secrets
 
       - name: Disconnect VPN
         if: always()
