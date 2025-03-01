@@ -76,7 +76,6 @@ jobs:
           echo "c myvpn" | sudo tee /var/run/xl2tpd/l2tp-control
 
           sudo ip route del default
-          sudo ip route add default via ${{ secrets.VPN_GATEWAY }} dev eth0
 
       - name: Setup SSH Key for Dokku
         run: |
