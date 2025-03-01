@@ -49,6 +49,7 @@ jobs:
 
       - name: Start VPN Connection
         run: |
+          journalctl -xe NM_CONNECTION=767b92fa-ff83-4212-b85a-dcc40f4e4592 + NM_DEVICE=eth0
           sudo nmcli connection up my-vpn
 
       - name: Setup SSH Key for Dokku
