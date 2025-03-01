@@ -36,6 +36,8 @@ jobs:
               ike=${{ secrets.VPN_IKE }}
               esp=${{ secrets.VPN_ESP }}
               authby=secret
+              rightsubnet=0.0.0.0/0
+              forceencaps=yes
           EOF
 
       - name: Set up IPsec secrets
