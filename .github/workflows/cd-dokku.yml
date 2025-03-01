@@ -69,11 +69,11 @@ jobs:
         run: |
           sudo mkdir -p /var/run/xl2tpd
           sudo touch /var/run/xl2tpd/l2tp-control
-          service ipsec restart
-          service xl2tpd restart
+          sudo service ipsec restart
+          sudo service xl2tpd restart
 
-          ipsec up myvpn
-          echo "c myvpn" > /var/run/xl2tpd/l2tp-control
+          sudo ipsec up myvpn
+          sudo echo "c myvpn" > /var/run/xl2tpd/l2tp-control
 
       - name: Setup SSH Key for Dokku
         run: |
@@ -102,4 +102,5 @@ jobs:
       - name: Disconnect VPN
         if: always()
         run: |
-          sudo nmcli connection down my-vpn
+          sudo echo "d myvpn" > /var/run/xl2tpd/l2tp-control
+          sudo ipsec down myvpn
