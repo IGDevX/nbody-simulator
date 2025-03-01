@@ -100,7 +100,7 @@ jobs:
       - name: Verify VPN Connection
         if: always()
         run: |
-          ipsec status
+          sudo ipsec status
           sudo ipsec statusall
           wget -qO- http://ipv4.icanhazip.com; echo
 
