@@ -92,7 +92,7 @@ jobs:
       - name: Connect to VPN
         run: |
           echo "Connecting to VPN..."
-          nmcli connection up myvpn
+          sudo nmcli connection up myvpn
 
       - name: Deploy to Dokku (while connected to VPN)
         run: |
