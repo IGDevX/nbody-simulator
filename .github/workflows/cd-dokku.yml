@@ -95,6 +95,11 @@ jobs:
           echo "Connecting to VPN..."
           sudo nmcli connection up myvpn
 
+      - name: Debug VPN connection
+        if: always()
+        run: |
+          journalctl -xe NM_CONNECTION=eefb6558-af2c-452b-977a-451219161dbb + NM_DEVICE=eth0
+
       - name: Deploy to Dokku (while connected to VPN)
         run: |
           ssh-keyscan -H "${{ secrets.DOKKU_ADDR }}" >> ~/.ssh/known_hosts
@@ -102,7 +107,6 @@ jobs:
           git push dokku prod:master
 
       - name: Disconnect VPN
-        if: always()
         run: |
           echo "Disconnecting VPN..."
           nmcli connection down myvpn
