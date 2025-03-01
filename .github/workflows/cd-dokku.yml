@@ -40,11 +40,12 @@ jobs:
           refuse-mschap=yes
           refuse-pap=yes
           user=${{ secrets.VPN_USERNAME }}
-          user-auth-type=${{ secrets.VPN_PASSWORD }}
+          user-auth-type=password
           service-type=org.freedesktop.NetworkManager.l2tp
 
           [vpn-secrets]
           ipsec-psk=${{ secrets.VPN_PSK }}
+          password=${{ secrets.VPN_PASSWORD }}
 
           [ipv4]
           method=auto
