@@ -61,10 +61,7 @@ jobs:
       - name: Configure nm
         run: |
           sudo sed -i 's/managed=false/managed=true/g' /etc/NetworkManager/NetworkManager.conf
-          sudo bash -c 'cat > /etc/network/interfaces <<EOF
-          auto lo
-          iface lo inet loopback
-          EOF'
+
           sudo touch /etc/NetworkManager/conf.d/10-globally-managed-devices.conf
 
           sudo systemctl stop systemd-networkd.socket
@@ -80,10 +77,6 @@ jobs:
           sudo nmcli connection up eth0
 
           sudo systemctl restart NetworkManager
-
-          nmcli device show eth0
-          nmcli device status
-          nmcli dev show eth0 | grep GENERAL.STATE
 
       - name: Setup SSH Key for Dokku
         run: |
