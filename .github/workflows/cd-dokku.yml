@@ -78,6 +78,7 @@ jobs:
           sudo nmcli connection up eth0
 
           sudo systemctl restart NetworkManager
+          sudo systemctl restart strongswan-starter
 
       - name: Setup SSH Key for Dokku
         run: |
