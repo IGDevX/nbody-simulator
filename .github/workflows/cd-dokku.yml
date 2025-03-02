@@ -83,6 +83,9 @@ jobs:
 
           sudo ip route add $(nslookup ${{ secrets.DOKKU_ADDR }} | awk '/^Address: / { print $2 }' | tail -n1) dev ppp0
 
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+
       - name: Setup SSH Key for Dokku
         run: |
           echo "Setting up SSH key..."
@@ -115,3 +118,7 @@ jobs:
         run: |
           echo "d myvpn" | sudo tee /var/run/xl2tpd/l2tp-control
           sudo ipsec down myvpn
+
+      - name: Notify Deployment Success
+        if: success()
+        run: echo "🚀 Successfully deployed to Dokku!"
