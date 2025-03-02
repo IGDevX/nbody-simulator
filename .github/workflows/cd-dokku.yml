@@ -98,7 +98,6 @@ jobs:
 
       - name: Run Build
         run: |
-          git checkout prod
           ./gradlew build
 
       - name: Setup SSH Key for Dokku
@@ -119,6 +118,10 @@ jobs:
           ssh-keyscan -H "${{ secrets.DOKKU_ADDR }}" >> ~/.ssh/known_hosts || { echo "❌ ssh-keyscan failed"; exit 1; }
 
           git remote add dokku dokku@${{ secrets.DOKKU_ADDR }}:nbody-simulator-backend || { echo "❌ git remote add failed"; exit 1; }
+
+          git config --global user.email "${{ secrets.GIT_MAIL }}"
+          git config --global user.name "${{ secrets.GIT_NAME }}"
+
           git checkout -b temp-deploy
           git add -f build
           git commit -m "Temporary deploy commit"
