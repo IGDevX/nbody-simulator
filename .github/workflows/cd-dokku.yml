@@ -75,6 +75,12 @@ jobs:
           sudo ipsec up myvpn
           echo "c myvpn" | sudo tee /var/run/xl2tpd/l2tp-control
 
+          while ! ip addr show ppp0 | grep -q "inet "; do
+              echo "Waiting for ppp0 to be up..."
+              sleep 1
+          done
+          echo "ppp0 is up!"
+
           sudo ip route add $(nslookup ${{ secrets.DOKKU_ADDR }} | awk '/^Address: / { print $2 }' | tail -n1) dev ppp0
 
       - name: Setup SSH Key for Dokku
