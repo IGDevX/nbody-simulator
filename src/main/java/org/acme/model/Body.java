@@ -8,4 +8,15 @@ public class Body {
     Double vx, vy;
     Double mass;
     Boolean fixed;
+    Double dt = 0.5;
+
+    public void updatePosition() {
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
+    }
+
+    public void updateVelocity(Double ax, Double ay) {
+        this.vx += ax * dt;
+        this.vy += ay * dt;
+    }
 }
