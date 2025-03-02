@@ -83,6 +83,18 @@ jobs:
 
           sudo ip route add $(nslookup ${{ secrets.DOKKU_ADDR }} | awk '/^Address: / { print $2 }' | tail -n1) dev ppp0
 
+      - name: Setup SSH Key for Dokku
+        run: |
+          echo "Setting up SSH key..."
+          mkdir -p ~/.ssh
+          cat <<EOF > ~/.ssh/id_rsa
+          ${{ secrets.DOKKU_SSH_KEY }}
+          EOF
+          chmod 600 ~/.ssh/id_rsa
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/id_rsa
+          ssh-keyscan -H "${{ secrets.DOKKU_ADDR }}" >> ~/.ssh/known_hosts || { echo "❌ ssh-keyscan failed"; exit 1; }
+
       - name: Checkout the repository
         uses: actions/checkout@v4
 
@@ -103,22 +115,9 @@ jobs:
           git checkout -b temp-deploy
           ./gradlew build
 
-      - name: Setup SSH Key for Dokku
-        run: |
-          echo "Setting up SSH key..."
-          mkdir -p ~/.ssh
-          cat <<EOF > ~/.ssh/id_rsa
-          ${{ secrets.DOKKU_SSH_KEY }}
-          EOF
-          chmod 600 ~/.ssh/id_rsa
-          eval "$(ssh-agent -s)"
-          ssh-add ~/.ssh/id_rsa
-
       - name: Run tasks after VPN connection
         run: |
           echo "VPN Connected! Now executing required commands..."
-
-          ssh-keyscan -H "${{ secrets.DOKKU_ADDR }}" >> ~/.ssh/known_hosts || { echo "❌ ssh-keyscan failed"; exit 1; }
 
           git remote add dokku dokku@${{ secrets.DOKKU_ADDR }}:nbody-simulator-backend || { echo "❌ git remote add failed"; exit 1; }
 
