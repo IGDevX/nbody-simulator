@@ -121,9 +121,10 @@ jobs:
 
           git remote add dokku dokku@${{ secrets.DOKKU_ADDR }}:nbody-simulator-backend || { echo "❌ git remote add failed"; exit 1; }
 
+          git fetch --unshallow || true
           git add -f build
           git commit -m "Temporary deploy commit"
-          git push dokku temp-deploy:master
+          git push dokku temp-deploy:master --force
           git checkout prod
           git branch -D temp-deploy
 
