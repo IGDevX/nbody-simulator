@@ -75,8 +75,6 @@ jobs:
           sudo ipsec up myvpn
           echo "c myvpn" | sudo tee /var/run/xl2tpd/l2tp-control
 
-          sudo ip route del default
-
       - name: Setup SSH Key for Dokku
         run: |
           echo "Setting up SSH key..."
