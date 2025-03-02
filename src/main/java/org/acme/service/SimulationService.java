@@ -29,6 +29,9 @@ public class SimulationService implements SimulationInterface {
 
     @Override
     public void addBody(Body body) {
+        if(body.getMass() == null || body.getX() == null || body.getY() == null || body.getVx() == null || body.getVy() == null) {
+            return;
+        }
         bodies.add(body);
     }
 
