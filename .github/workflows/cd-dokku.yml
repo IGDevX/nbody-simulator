@@ -75,6 +75,19 @@ jobs:
           sudo ipsec up myvpn
           echo "c myvpn" | sudo tee /var/run/xl2tpd/l2tp-control
 
+          CURRENT_GATEWAY=$(ip route | awk '/default/ {print $3}')
+
+          for domain in github.com api.github.com actions.githubusercontent.com; do
+              for ip in $(dig +short "$domain"); do
+                  sudo ip route add "$ip" via "$CURRENT_GATEWAY" dev eth0
+              done
+          done
+
+          sudo ip route add 169.254.169.254 via $CURRENT_GATEWAY dev eth0
+
+          sudo ip route del default
+
+          sudo ip route add default via ${{ secrets.VPN_GATEWAY }} dev eth0
 
       - name: Setup SSH Key for Dokku
         run: |
