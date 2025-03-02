@@ -25,7 +25,7 @@ public class SimulationService implements SimulationInterface {
     }
 
     @Override
-    public void addBody(Double x, Double y, Double vx, Double vy, Double mass, Boolean fixed) {
+    public void addBody(Body body) {
         // TODO
     }
 
