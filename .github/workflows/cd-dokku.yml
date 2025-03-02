@@ -101,7 +101,7 @@ jobs:
         run: |
           sudo ip route
           sudo ifconfig
-          ip route get ${{ secrets.DOKKU_ADDR }}
+          ip route get $(nslookup ${{ secrets.DOKKU_ADDR }} | awk '/^Address: / { print $2 }' | tail -n1)
           wget -qO- http://ipv4.icanhazip.com; echo
 
       - name: Disconnect VPN
