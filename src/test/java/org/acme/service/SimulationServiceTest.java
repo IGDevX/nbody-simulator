@@ -3,9 +3,6 @@ package org.acme.service;
 import org.acme.model.Body;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import java.util.List;
 
@@ -13,19 +10,16 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class SimulationServiceTest {
 
-    @InjectMocks
-    private SimulationService simulationService;
+    private final SimulationService simulationService = new SimulationService();
 
-    @Mock
     private Body mockBody;
-
-    @Mock
     private Body mockBodyFixed;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
+        simulationService.onStart(null);
 
+        mockBody = new Body();
         mockBody.setX(1.0);
         mockBody.setY(2.0);
         mockBody.setVx(0.5);
@@ -33,6 +27,7 @@ class SimulationServiceTest {
         mockBody.setMass(10.0);
         mockBody.setFixed(false);
 
+        mockBodyFixed = new Body();
         mockBodyFixed.setX(1.0);
         mockBodyFixed.setY(2.0);
         mockBodyFixed.setFixed(true);
