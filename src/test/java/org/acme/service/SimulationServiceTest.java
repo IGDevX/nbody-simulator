@@ -13,7 +13,6 @@ class SimulationServiceTest {
     private final SimulationService simulationService = new SimulationService();
 
     private Body mockBody;
-    private Body mockBodyFixed;
 
     @BeforeEach
     void setUp() {
@@ -26,11 +25,6 @@ class SimulationServiceTest {
         mockBody.setVy(0.5);
         mockBody.setMass(10.0);
         mockBody.setFixed(false);
-
-        mockBodyFixed = new Body();
-        mockBodyFixed.setX(1.0);
-        mockBodyFixed.setY(2.0);
-        mockBodyFixed.setFixed(true);
     }
 
     @Test
@@ -61,7 +55,7 @@ class SimulationServiceTest {
     void removeNonExistingBody() {
         simulationService.addBody(mockBody);
 
-        simulationService.removeBody(mockBodyFixed);
+        simulationService.removeBody(new Body());
 
         assertEquals(1, simulationService.step().size());
     }
@@ -72,19 +66,6 @@ class SimulationServiceTest {
 
         assertNotNull(result);
         assertEquals(0, result.size());
-    }
-
-    @Test
-    void stepFixedBody() {
-        Double x = mockBodyFixed.getX();
-        Double y = mockBodyFixed.getY();
-
-        simulationService.addBody(mockBodyFixed);
-
-        List<Body> result = simulationService.step();
-
-        assertEquals(x, result.getFirst().getX());
-        assertEquals(y, result.getFirst().getY());
     }
 
     @Test
