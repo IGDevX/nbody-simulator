@@ -7,7 +7,6 @@ public class Body {
     Double x,y;
     Double vx, vy;
     Double mass;
-    Boolean fixed;
     Double dt = 0.5;
 
     public void updatePosition() {

@@ -24,7 +24,6 @@ class SimulationServiceTest {
         mockBody.setVx(0.5);
         mockBody.setVy(0.5);
         mockBody.setMass(10.0);
-        mockBody.setFixed(false);
     }
 
     @Test
