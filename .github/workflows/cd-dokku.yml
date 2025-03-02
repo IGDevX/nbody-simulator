@@ -97,7 +97,9 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run Build
-        run: ./gradlew build
+        run: |
+          git checkout prod
+          ./gradlew build
 
       - name: Setup SSH Key for Dokku
         run: |
@@ -115,7 +117,15 @@ jobs:
           echo "VPN Connected! Now executing required commands..."
 
           ssh-keyscan -H "${{ secrets.DOKKU_ADDR }}" >> ~/.ssh/known_hosts || { echo "❌ ssh-keyscan failed"; exit 1; }
+
           git remote add dokku dokku@${{ secrets.DOKKU_ADDR }}:nbody-simulator-backend || { echo "❌ git remote add failed"; exit 1; }
+          git checkout -b temp-deploy
+          git add -f build
+          git commit -m "Temporary deploy commit"
+          git push dokku temp-deploy:master --force
+          git checkout prod
+          git branch -D temp-deploy
+
           git push dokku prod:master || { echo "❌ git push failed"; exit 1; }
 
       - name: Disconnect VPN
