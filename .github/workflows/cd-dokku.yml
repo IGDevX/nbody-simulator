@@ -75,7 +75,7 @@ jobs:
           sudo ipsec up myvpn
           echo "c myvpn" | sudo tee /var/run/xl2tpd/l2tp-control
 
-          sudo ip route add ${{ secrets.DOKKU_ADDR }} dev ppp0
+          sudo ip route add $(nslookup ${{ secrets.DOKKU_ADDR }} | awk '/^Address: / { print $2 }' | tail -n1) dev ppp0
 
       - name: Setup SSH Key for Dokku
         run: |
