@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class Body {
+    String id;
     Double x,y;
     Double vx, vy;
     Double mass;

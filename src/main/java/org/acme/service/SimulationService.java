@@ -40,6 +40,15 @@ public class SimulationService implements SimulationInterface {
         bodies.remove(body);
     }
 
+    public void removeBodyByID(String id) {
+        for (Body body : bodies) {
+            if (body.getId().equals(id)) {
+                bodies.remove(body);
+                break;
+            }
+        }
+    }
+
     @Override
     public List<Body> step() {
         var forces = computeForces();
