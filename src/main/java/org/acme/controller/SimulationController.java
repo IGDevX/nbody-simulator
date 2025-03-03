@@ -1,6 +1,8 @@
 package org.acme.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.inject.Inject;
 import jakarta.websocket.*;
@@ -69,10 +71,20 @@ public class SimulationController {
 
     @OnMessage
     public void onMessage(String message, Session session) {
-        System.out.println("Received new body: " + message);
-        Body data = new Gson().fromJson(message, Body.class);
-        SimulationService simulationService = sessionStates.get(session);
-        simulationService.addBody(data);
+        System.out.println("Received: " + message);
+
+        JsonObject jsonMessage = JsonParser.parseString(message).getAsJsonObject();
+
+        if (jsonMessage.has("remove")) {
+            String bodyId = jsonMessage.get("remove").getAsString();
+            SimulationService simulationService = sessionStates.get(session);
+            simulationService.removeBodyByID(bodyId);
+            System.out.println("Removed body with id: " + bodyId);
+        } else {
+            Body data = new Gson().fromJson(message, Body.class);
+            SimulationService simulationService = sessionStates.get(session);
+            simulationService.addBody(data);
+        }
     }
 
     @OnClose
